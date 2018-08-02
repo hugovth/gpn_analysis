@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Jul 17 11:13:19 2018
-
+adapted from and strongly inspired by https://briandew.wordpress.com/2016/06/15/trade-network-analysis-why-centrality-matters/
 @author: Hugo
 """
 
