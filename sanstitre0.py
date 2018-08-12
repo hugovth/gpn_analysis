@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+
 """
 Created on Tue Jul 17 11:13:19 2018
 
@@ -7,6 +7,7 @@ Created on Tue Jul 17 11:13:19 2018
 
 import networkx as nx
 import csv
+import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import itertools
@@ -23,16 +24,16 @@ with open('20122017car.csv', 'r') as csvfile:
     csv_f = csv.reader(csvfile)
     next(csv_f)
     for row in csv_f:
+        if row[0] == "2017":
             G.add_edge(row[2],row[3],weight=float(row[10]))
 #usachnexp = G['USA']['CHN']['weight']
 #print ('USA 2012 vehicule exports to China, in USD: ' + str(usachnexp))
+            
+            
 # Calculate eigenvector centrality of matrix G 
 # with the exports value as weights
 
-wordexp=G.size(weight='weight')
-minwordexp=wordexp/2000
-# Use this measure to determine the node color in viz
-# Blank dictionary to store total exports
+# Blank dictionary to store total exports of each country
 totexp = {}
 
 # Calculate total exports of each country in the network
@@ -47,11 +48,17 @@ avgexp = np.mean(number)
 number=[totexp[key] for key in totexp]
 avgexp = np.mean(number) 
 nx.set_node_attributes(G,totexp, name='totexp')
-#remove node and edge that are irrelevant
-nx.info(G)
+#Cleaning the graph
+
+#remove node and edge that are irrelevant,
+#we took country representing 0.05 % of word export an edge coresponding 5% of export of each country
+ 
+wordexp=G.size(weight='weight')
+minwordexp=wordexp/2000
 removenode=[]
 for exp in G.nodes():
     if G.nodes[exp]['totexp']< minwordexp:
+        removenode.append(exp)
 removeedge=[]
 for (u, v) in G.out_edges():  
     if G[u][v]['weight']<G.nodes[u]['totexp']*0.05:
@@ -59,21 +66,24 @@ for (u, v) in G.out_edges():
 G.remove_edges_from(removeedge)
 G.remove_nodes_from(removenode)
 nx.info(G)
+# Calculate eigenvector/page rank centrality of matrix G 
+#change formula for different type of centrality
+# with the exports value as weights
 ec = nx.pagerank_numpy(G, weight='weight')
 
-# Set this as a node attribute for each node
+# Set centrality as a node attribute for each node
 nx.set_node_attributes(G,ec, name='cent')
-node_color = [float(G.node[v]['cent'])*2 for v in G]
+node_color = [float(G.node[v]['cent']) for v in G]
 
 
 
 
-# Use the results later for the node's size in the graph
+# Use the results later for the node's size in the graph, expended 10 time for visualisation
 node_size = [float(G.nodes[v]['totexp'])*10 / avgexp for v in G]
 #edge_size = [G[u][v]['weight'] / avgexp for u,v in G]
 edge_size = [G[u][v]['weight']/ avgexp for (u,v) in G.edges()]
 
-# Visualization
+# Visualization 
 # Calculate position of each node in G using networkx spring layout
 pos = nx.spring_layout(G,k=30,iterations=8) 
 
@@ -99,7 +109,9 @@ plt.margins(0,0)
 plt.axis('off')
 
 # Save as high quality png
-#plt.savefig('760200.png', dpi=1000)
+plt.savefig('760200.png', dpi=1000)
+
+#clustering using newman  
 def most_central_edge(G):
     centrality =nx.edge_betweenness_centrality(G, weight='weight')
     max_cent = max(centrality.values())
@@ -112,7 +124,7 @@ comp = community.girvan_newman(G,most_valuable_edge=most_central_edge)
 #tuple(sorted(c) for c in next(comp))
 i = 1
 while i<4:
-    cluster2017=tuple(sorted(c) for c in next(comp))
+    cluster=tuple(sorted(c) for c in next(comp))
     i += 1
 print(cluster)
 #for cluster in cluster:
